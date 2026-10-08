@@ -1,0 +1,9 @@
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  server: {
+    host: '127.0.0.1',
+    proxy: { '/api': { target: 'http://127.0.0.1:4318', changeOrigin: true, configure: proxy => proxy.on('proxyReq', proxyRequest => proxyRequest.setHeader('Origin', 'http://127.0.0.1:4318')) } },
+  },
+  build: { outDir: 'dist' },
+});

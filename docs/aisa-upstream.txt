@@ -1,0 +1,5 @@
+Repository: https://github.com/AIsa-team/agent-skills
+Commit: bb70b34de56aff23cc3fcc4a8b30ea5e9da78821
+Subtree: platform/aisa
+License: MIT
+Installed: 2026-09-12
