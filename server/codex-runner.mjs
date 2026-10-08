@@ -1,15 +1,19 @@
 import { spawn, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { mkdtemp, writeFile, readFile, rm, access } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { tmpdir, homedir } from 'node:os';
 import { join, isAbsolute } from 'node:path';
 import { constants } from 'node:fs';
 import { InputError } from './store.mjs';
 
 const execute = promisify(execFile);
 let cachedCapabilities;
-export async function codexPath(env = process.env) {
-  const candidates = [env.MEDIA_MONITOR_CODEX, ...String(env.PATH || '').split(':').filter(Boolean).map(dir => join(dir, 'codex')), '/Applications/ChatGPT.app/Contents/Resources/codex'];
+export async function codexPath(env = process.env, { applicationRoots = ['/Applications', join(homedir(), 'Applications')] } = {}) {
+  const bundled = applicationRoots.flatMap(root => ['ChatGPT.app', 'Codex.app'].flatMap(app => [
+    join(root, app, 'Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex'),
+    join(root, app, 'Contents/Resources/codex'),
+  ]));
+  const candidates = [env.MEDIA_MONITOR_CODEX, ...String(env.PATH || '').split(':').filter(Boolean).map(dir => join(dir, 'codex')), ...bundled];
   for (const candidate of candidates) {
     if (!candidate || !isAbsolute(candidate)) continue;
     try { await access(candidate, constants.X_OK); return candidate; } catch { /* Try the next installed executable. */ }

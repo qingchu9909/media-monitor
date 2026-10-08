@@ -2,10 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
-import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, writeFile, rm, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { runCodexAnalysis } from '../server/codex-runner.mjs';
+import { runCodexAnalysis, codexPath } from '../server/codex-runner.mjs';
 
 async function fixture(t) {
   const dir = await mkdtemp(join(tmpdir(), 'monitor-codex-fixture-'));
@@ -61,4 +61,23 @@ test('nonzero exit, cancellation and timeout never accept a completed result', a
 test('a completed process with no final output fails with a safe application error', async t => {
   await fixture(t);
   await assert.rejects(runCodexAnalysis({ prompt: 'fixture', schema: {}, spawnImpl: fakeSpawn({ result: null }) }), error => error.status === 502 && !error.message.includes('media-monitor-analysis-'));
+});
+
+// A launchd service can retain a minimal PATH after an app updates its bundle layout.
+test('a service without Codex in PATH finds the current desktop app CLI bundle', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'monitor-apps-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const executable = join(root, 'ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex');
+  await mkdir(join(executable, '..'), { recursive: true });
+  await writeFile(executable, '#!/bin/sh\nexit 0\n', { mode: 0o700 });
+  assert.equal(await codexPath({ PATH: '/usr/bin:/bin' }, { applicationRoots: [root] }), executable);
+});
+
+test('an explicit CLI override wins over desktop discovery and broken installs are skipped', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'monitor-apps-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const executable = join(root, 'custom-codex');
+  await writeFile(executable, '#!/bin/sh\nexit 0\n', { mode: 0o700 });
+  assert.equal(await codexPath({ PATH: '', MEDIA_MONITOR_CODEX: executable }, { applicationRoots: [root] }), executable);
+  assert.equal(await codexPath({ PATH: '', MEDIA_MONITOR_CODEX: join(root, 'missing') }, { applicationRoots: [root] }), null);
 });

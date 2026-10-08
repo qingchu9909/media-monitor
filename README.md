@@ -37,7 +37,7 @@ codex login
 codex login status
 ```
 
-后台从 PATH 查找 `codex`。如果装在其它位置，启动时指定绝对路径：
+后台优先使用 `MEDIA_MONITOR_CODEX`，再从 PATH 查找 `codex`，也支持系统和用户 Applications 目录中 ChatGPT/Codex App 的新旧 CLI 布局。如果装在其它位置，启动时指定绝对路径：
 
 ```sh
 MEDIA_MONITOR_CODEX=/absolute/path/to/codex npm start
@@ -100,6 +100,6 @@ npm run service:stop
 
 ## 开源快照
 
-此次开源包含应用源码、测试与通用使用文档，未包含作者本机数据库、草稿、凭据、运行日志及旧提交历史。原作者机器近期存在后台找不到 Codex CLI 的故障；它不影响 RSS 采集，中文整理需要先完成以上配置。测试和构建通过不代表你的账号、网络或全部来源已验证。
+此次开源包含应用源码、测试与通用使用文档，未包含作者本机数据库、草稿、凭据、运行日志及旧提交历史。已修复 App 更新后 CLI 路径变化导致后台无法识别的问题；中文整理仍需要完成以上账号配置。测试和构建通过不代表你的账号、网络或全部来源已验证。
 
 贡献前请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。安全问题请按 [SECURITY.md](SECURITY.md) 处理，第三方组件见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
